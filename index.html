@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#0f0f13"/>
+<title>KOR HESSAB</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%230f0f13'/%3E%3Cpolygon points='256,80 400,200 380,200 380,340 132,340 132,200 112,200' fill='%231a1a22' stroke='%23FFD93D' stroke-width='4' stroke-linejoin='round'/%3E%3Cpolygon points='256,80 400,200 112,200' fill='none' stroke='%23FFD93D' stroke-width='4'/%3E%3Crect x='220' y='250' width='72' height='90' rx='36' fill='%23FFD93D'/%3E%3Crect x='152' y='230' width='48' height='48' rx='8' fill='%23FFD93D' opacity='0.6'/%3E%3Crect x='312' y='230' width='48' height='48' rx='8' fill='%23FFD93D' opacity='0.6'/%3E%3Ctext x='256' y='312' text-anchor='middle' font-size='40'%3E%F0%9F%92%B0%3C/text%3E%3Ctext x='256' y='400' text-anchor='middle' font-family='Georgia' font-size='42' font-weight='bold' fill='%23FFD93D' letter-spacing='4'%3EKOR%3C/text%3E%3Ctext x='256' y='450' text-anchor='middle' font-family='Georgia' font-size='28' font-weight='bold' fill='%23f0ede8' letter-spacing='6'%3EHESSAB%3C/text%3E%3C/svg%3E"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0f0f13;color:#f0ede8;font-family:'DM Sans','Segoe UI',sans-serif}
+  input,select{outline:none}
+  button{cursor:pointer}
+  .card{background:#1a1a22;border-radius:16px;padding:20px;border:1px solid #2a2a36}
+  .btn-primary{background:#FFD93D;color:#0f0f13;border:none;padding:12px 24px;border-radius:10px;font-weight:600;font-size:15px;width:100%}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed}
+  .btn-secondary{background:#1a1a22;color:#f0ede8;border:1px solid #2a2a36;padding:12px 24px;border-radius:10px;font-weight:600;font-size:15px;width:100%}
+  .input-field{background:#0f0f13;border:1px solid #2a2a36;color:#f0ede8;padding:11px 14px;border-radius:10px;font-size:15px;width:100%}
+  .input-field:focus{border-color:#FFD93D}
+  .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .delete-btn{background:none;border:none;color:#555;font-size:18px;padding:4px 8px;border-radius:6px}
+  .chip{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:2px solid transparent;background:#0f0f13}
+  .chip.active{color:#0f0f13}
+  .scan-btn{flex:1;border:none;border-radius:10px;padding:12px 10px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+  .scan-btn:disabled{opacity:.4;cursor:not-allowed}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .pulsing{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:24px;height:24px;border:2px solid #2a2a36;border-top-color:#FFD93D;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+  .modal-bg{position:fixed;inset:0;background:#000c;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal{background:#1a1a22;border-radius:16px;padding:16px;max-width:500px;width:100%;border:1px solid #2a2a36;max-height:90vh;overflow-y:auto}
+  .month-chip{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;border:none;white-space:nowrap}
+  .month-chip.active{background:#FFD93D;color:#0f0f13}
+  .month-chip.inactive{background:#1a1a22;color:#888;border:1px solid #2a2a36}
+  .code-box{background:#0f0f13;border:2px dashed #FFD93D;border-radius:12px;padding:16px;text-align:center;letter-spacing:4px;font-size:24px;font-weight:800;color:#FFD93D;font-family:'Syne',sans-serif}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef,useEffect}=React;
+const COLORS=["#FF6B6B","#4ECDC4","#FFD93D","#6BCB77","#A78BFA","#F97316"];
+const SURL="https://olgodwfhkheawnsjiydl.supabase.co";
+const SKEY="sb_publishable_fSLUy4FErk9WM0BBaMtDOw_T3s2_et8";
+const MOIS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+const sb=supabase.createClient(SURL,SKEY);
+
+const getMoisKey=(date)=>{const p=date.split("/");return p.length===3?`${p[2]}-${p[1]}`:"inconnu";};
+const getMoisLabel=(key)=>{if(key==="inconnu")return"Date inconnue";const[y,m]=key.split("-");return`${MOIS[parseInt(m)-1]} ${y}`;};
+
+const genCode=()=>{const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let code="";for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];return code;};
+
+const calcReglements=(noms,stats)=>{
+  const bilans=stats.map((s,i)=>({i,nom:s.nom,solde:s.bilan}));
+  const deb=bilans.filter(b=>b.solde<-0.01).map(x=>({...x})).sort((a,b)=>a.solde-b.solde);
+  const cre=bilans.filter(b=>b.solde>0.01).map(x=>({...x})).sort((a,b)=>b.solde-a.solde);
+  const txs=[];let d=0,c=0;
+  while(d<deb.length&&c<cre.length){
+    const m=Math.min(-deb[d].solde,cre[c].solde);
+    if(m>0.01)txs.push({de:deb[d].nom,a:cre[c].nom,montant:Math.round(m*100)/100,iDe:deb[d].i,iA:cre[c].i});
+    deb[d].solde+=m;cre[c].solde-=m;
+    if(Math.abs(deb[d].solde)<0.01)d++;
+    if(Math.abs(cre[c].solde)<0.01)c++;
+  }
+  return txs;
+};
+
+// ==================== AUTH SCREEN ====================
+function AuthScreen({onAuth}){
+  const [mode,setMode]=useState("login"); // login | register | forgot
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [prenom,setPrenom]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [msg,setMsg]=useState("");
+
+  const traduireErreur=(msg)=>{
+    if(msg.includes("Invalid login"))return"Email ou mot de passe incorrect.";
+    if(msg.includes("rate limit"))return"Trop de tentatives. Attendez quelques minutes.";
+    if(msg.includes("already registered"))return"Cet email est déjà utilisé.";
+    if(msg.includes("Password should"))return"Le mot de passe doit avoir au moins 6 caractères.";
+    if(msg.includes("valid email"))return"Adresse email invalide.";
+    if(msg.includes("Email not confirmed"))return"Confirmez votre email avant de vous connecter.";
+    return msg;
+  };
+
+  const handleSubmit=async()=>{
+    if(!email||(!password&&mode!=="forgot"))return;
+    if(mode==="register"&&!prenom){setMsg("Entrez votre prénom");return;}
+    setLoading(true);setMsg("");
+    try{
+      if(mode==="login"){
+        const{data,error}=await sb.auth.signInWithPassword({email,password});
+        if(error)throw error;
+        onAuth(data.user);
+      }else if(mode==="register"){
+        const{error}=await sb.auth.signUp({email,password,options:{data:{prenom}}});
+        if(error)throw error;
+        setMsg("✅ Compte créé ! Vérifiez votre email pour confirmer.");
+      }else if(mode==="forgot"){
+        const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:"https://korhessab.netlify.app"});
+        if(error)throw error;
+        setMsg("✅ Email envoyé ! Vérifiez votre boîte mail pour réinitialiser votre mot de passe.");
+      }
+    }catch(e){setMsg("❌ "+traduireErreur(e.message));}
+    finally{setLoading(false);}
+  };
+
+  return(
+    <div style={{minHeight:"100vh",padding:"40px 20px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="80" height="80" style={{marginBottom:16}}>
+        <rect width="512" height="512" rx="100" fill="#1a1a22"/>
+        <polygon points="256,80 400,200 380,200 380,340 132,340 132,200 112,200" fill="#0f0f13" stroke="#FFD93D" strokeWidth="4" strokeLinejoin="round"/>
+        <polygon points="256,80 400,200 112,200" fill="none" stroke="#FFD93D" strokeWidth="4" strokeLinejoin="round"/>
+        <rect x="220" y="250" width="72" height="90" rx="36" fill="#FFD93D"/>
+        <rect x="152" y="230" width="48" height="48" rx="8" fill="#FFD93D" opacity="0.6"/>
+        <rect x="312" y="230" width="48" height="48" rx="8" fill="#FFD93D" opacity="0.6"/>
+        <text x="256" y="312" textAnchor="middle" fontSize="40">💰</text>
+      </svg>
+      <h1 style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,marginBottom:6}}>KOR HESSAB</h1>
+      <p style={{color:"#666",fontSize:14,marginBottom:32}}>Dépenses partagées entre colocataires</p>
+
+      <div className="card" style={{width:"100%",maxWidth:400}}>
+        {mode!=="forgot"&&(
+          <div style={{display:"flex",marginBottom:20,background:"#0f0f13",borderRadius:10,padding:4}}>
+            <button onClick={()=>{setMode("login");setMsg("");}} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:mode==="login"?"#FFD93D":"transparent",color:mode==="login"?"#0f0f13":"#666",fontWeight:600,fontSize:14}}>Connexion</button>
+            <button onClick={()=>{setMode("register");setMsg("");}} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:mode==="register"?"#FFD93D":"transparent",color:mode==="register"?"#0f0f13":"#666",fontWeight:600,fontSize:14}}>Inscription</button>
+          </div>
+        )}
+
+        {mode==="forgot"&&(
+          <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:700,marginBottom:16}}>🔑 Mot de passe oublié</h2>
+        )}
+
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {mode==="register"&&(
+            <input className="input-field" placeholder="Votre prénom" value={prenom} onChange={e=>setPrenom(e.target.value)}/>
+          )}
+          <input className="input-field" type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}/>
+          {mode!=="forgot"&&(
+            <input className="input-field" type="password" placeholder="Mot de passe (min. 6 caractères)" value={password} onChange={e=>setPassword(e.target.value)}/>
+          )}
+          <button className="btn-primary" disabled={loading} onClick={handleSubmit}>
+            {loading?"⏳ Chargement...":(mode==="login"?"Se connecter":mode==="register"?"Créer un compte":"Envoyer le lien")}
+          </button>
+          {mode==="login"&&(
+            <button onClick={()=>{setMode("forgot");setMsg("");}} style={{background:"none",border:"none",color:"#666",fontSize:13,textAlign:"center",textDecoration:"underline"}}>
+              Mot de passe oublié ?
+            </button>
+          )}
+          {mode==="forgot"&&(
+            <button onClick={()=>{setMode("login");setMsg("");}} style={{background:"none",border:"none",color:"#666",fontSize:13,textAlign:"center"}}>
+              ← Retour à la connexion
+            </button>
+          )}
+        </div>
+        {msg&&<div style={{marginTop:12,fontSize:13,color:msg.startsWith("✅")?"#6BCB77":"#FF6B6B",textAlign:"center"}}>{msg}</div>}
+      </div>
+    </div>
+  );
+
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {mode==="register"&&(
+            <input className="input-field" placeholder="Votre prénom" value={prenom} onChange={e=>setPrenom(e.target.value)}/>
+          )}
+          <input className="input-field" type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}/>
+          <input className="input-field" type="password" placeholder="Mot de passe" value={password} onChange={e=>setPassword(e.target.value)}/>
+          <button className="btn-primary" disabled={loading} onClick={handleSubmit}>
+            {loading?"⏳ Chargement...":(mode==="login"?"Se connecter":"Créer un compte")}
+          </button>
+        </div>
+        {msg&&<div style={{marginTop:12,fontSize:13,color:msg.startsWith("✅")?"#6BCB77":"#FF6B6B",textAlign:"center"}}>{msg}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ==================== GROUP SCREEN ====================
+function GroupScreen({user,onGroup}){
+  const [mode,setMode]=useState("choix"); // choix | creer | rejoindre
+  const [nomGroupe,setNomGroupe]=useState("");
+  const [prenom,setPrenom]=useState("");
+  const [code,setCode]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [msg,setMsg]=useState("");
+  const [codeGenere,setCodeGenere]=useState("");
+
+  const creerGroupe=async()=>{
+    if(!nomGroupe||!prenom){setMsg("Remplissez tous les champs");return;}
+    setLoading(true);setMsg("");
+    try{
+      const code=genCode();
+      const{data:groupe,error:e1}=await sb.from("groupes").insert({nom:nomGroupe,code}).select().single();
+      if(e1)throw e1;
+      const{error:e2}=await sb.from("membres").insert({groupe_id:groupe.id,user_id:user.id,prenom});
+      if(e2)throw e2;
+      setCodeGenere(code);
+    }catch(e){setMsg("❌ "+e.message);}
+    finally{setLoading(false);}
+  };
+
+  const rejoindreGroupe=async()=>{
+    if(!code||!prenom){setMsg("Remplissez tous les champs");return;}
+    setLoading(true);setMsg("");
+    try{
+      const{data:groupe,error:e1}=await sb.from("groupes").select().eq("code",code.toUpperCase()).single();
+      if(e1||!groupe)throw new Error("Code invalide");
+      const{error:e2}=await sb.from("membres").insert({groupe_id:groupe.id,user_id:user.id,prenom});
+      if(e2)throw new Error("Vous êtes déjà dans ce groupe");
+      onGroup(groupe,prenom);
+    }catch(e){setMsg("❌ "+e.message);}
+    finally{setLoading(false);}
+  };
+
+  const continuerAvecCode=async()=>{
+    const{data:groupe}=await sb.from("groupes").select().eq("code",codeGenere).single();
+    const{data:membre}=await sb.from("membres").select().eq("groupe_id",groupe.id).eq("user_id",user.id).single();
+    onGroup(groupe,membre.prenom);
+  };
+
+  if(codeGenere){
+    return(
+      <div style={{minHeight:"100vh",padding:"40px 20px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <div className="card" style={{width:"100%",maxWidth:400,textAlign:"center"}}>
+          <div style={{fontSize:40,marginBottom:12}}>🎉</div>
+          <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,marginBottom:8}}>Groupe créé !</h2>
+          <p style={{color:"#888",fontSize:14,marginBottom:20}}>Partagez ce code avec vos colocataires</p>
+          <div className="code-box" style={{marginBottom:20}}>{codeGenere}</div>
+          <p style={{color:"#555",fontSize:12,marginBottom:20}}>Vos colocataires entrent ce code pour rejoindre le groupe</p>
+          <button className="btn-primary" onClick={continuerAvecCode}>Entrer dans le groupe →</button>
+        </div>
+      </div>
+    );
+  }
+
+  return(
+    <div style={{minHeight:"100vh",padding:"40px 20px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="60" height="60" style={{marginBottom:12}}>
+        <rect width="512" height="512" rx="100" fill="#1a1a22"/>
+        <polygon points="256,80 400,200 380,200 380,340 132,340 132,200 112,200" fill="#0f0f13" stroke="#FFD93D" strokeWidth="4" strokeLinejoin="round"/>
+        <polygon points="256,80 400,200 112,200" fill="none" stroke="#FFD93D" strokeWidth="4" strokeLinejoin="round"/>
+        <rect x="220" y="250" width="72" height="90" rx="36" fill="#FFD93D"/>
+        <rect x="152" y="230" width="48" height="48" rx="8" fill="#FFD93D" opacity="0.6"/>
+        <rect x="312" y="230" width="48" height="48" rx="8" fill="#FFD93D" opacity="0.6"/>
+        <text x="256" y="312" textAnchor="middle" fontSize="40">💰</text>
+      </svg>
+      <h1 style={{fontFamily:"'Syne',sans-serif",fontSize:24,fontWeight:800,marginBottom:4}}>KOR HESSAB</h1>
+      <p style={{color:"#666",fontSize:14,marginBottom:32}}>Bienvenue ! Créez ou rejoignez un groupe.</p>
+
+      {mode==="choix"&&(
+        <div style={{width:"100%",maxWidth:400,display:"flex",flexDirection:"column",gap:12}}>
+          <button className="btn-primary" onClick={()=>setMode("creer")}>🏠 Créer un nouveau groupe</button>
+          <button className="btn-secondary" onClick={()=>setMode("rejoindre")}>🔑 Rejoindre avec un code</button>
+          <button onClick={async()=>{await sb.auth.signOut();window.location.reload();}} style={{background:"none",border:"none",color:"#555",fontSize:13,marginTop:8}}>Se déconnecter</button>
+        </div>
+      )}
+
+      {mode==="creer"&&(
+        <div className="card" style={{width:"100%",maxWidth:400}}>
+          <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:700,marginBottom:16}}>🏠 Créer un groupe</h2>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <input className="input-field" placeholder="Nom du groupe (ex: Appart Paris)" value={nomGroupe} onChange={e=>setNomGroupe(e.target.value)}/>
+            <input className="input-field" placeholder="Votre prénom" value={prenom} onChange={e=>setPrenom(e.target.value)}/>
+            <button className="btn-primary" disabled={loading} onClick={creerGroupe}>{loading?"⏳ Création...":"Créer le groupe"}</button>
+            <button className="btn-secondary" onClick={()=>setMode("choix")}>← Retour</button>
+          </div>
+          {msg&&<div style={{marginTop:12,fontSize:13,color:"#FF6B6B"}}>{msg}</div>}
+        </div>
+      )}
+
+      {mode==="rejoindre"&&(
+        <div className="card" style={{width:"100%",maxWidth:400}}>
+          <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:700,marginBottom:16}}>🔑 Rejoindre un groupe</h2>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <input className="input-field" placeholder="Code (ex: ABC123)" value={code} onChange={e=>setCode(e.target.value.toUpperCase())} style={{textTransform:"uppercase",letterSpacing:4,fontSize:16,textAlign:"center"}}/>
+            <input className="input-field" placeholder="Votre prénom" value={prenom} onChange={e=>setPrenom(e.target.value)}/>
+            <button className="btn-primary" disabled={loading} onClick={rejoindreGroupe}>{loading?"⏳ Recherche...":"Rejoindre"}</button>
+            <button className="btn-secondary" onClick={()=>setMode("choix")}>← Retour</button>
+          </div>
+          {msg&&<div style={{marginTop:12,fontSize:13,color:"#FF6B6B"}}>{msg}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== MAIN APP ====================
+function MainApp({user,groupe,monPrenom}){
+  const [membres,setMembres]=useState([]);
+  const [depenses,setDepenses]=useState([]);
+  const [form,setForm]=useState({description:"",montant:"",payeur:"",partage:{}});
+  const [factureFile,setFactureFile]=useState(null);
+  const [facturePreview,setFacturePreview]=useState(null);
+  const [deleteId,setDeleteId]=useState(null);
+  const [scanning,setScanning]=useState(false);
+  const [uploading,setUploading]=useState(false);
+  const [scanMsg,setScanMsg]=useState("");
+  const [loading,setLoading]=useState(true);
+  const [erreur,setErreur]=useState("");
+  const [factureVue,setFactureVue]=useState(null);
+  const [personneOuverte,setPersonneOuverte]=useState(null);
+  const [moisSelectionne,setMoisSelectionne]=useState("tous");
+  const scanFileRef=useRef();
+  const scanCameraRef=useRef();
+  const factureFileRef=useRef();
+  const factureCameraRef=useRef();
+
+  useEffect(()=>{chargerTout();},[]);
+
+  const chargerTout=async()=>{
+    setLoading(true);
+    try{
+      const{data:m}=await sb.from("membres").select().eq("groupe_id",groupe.id);
+      setMembres(m||[]);
+      const{data:d}=await sb.from("depenses").select().eq("groupe_id",groupe.id).order("created_at",{ascending:false});
+      setDepenses((d||[]).map(dep=>({...dep,partage:JSON.parse(dep.partage)})));
+      if(m){
+        const partageInit={};
+        m.forEach(mb=>{partageInit[mb.user_id]=true;});
+        setForm(f=>({...f,payeur:user.id,partage:partageInit}));
+      }
+    }catch(e){setErreur("Erreur de connexion.");}
+    finally{setLoading(false);}
+  };
+
+  const noms=membres.map(m=>m.prenom);
+  const getMembre=(userId)=>membres.find(m=>m.user_id===userId);
+  const getColor=(userId)=>{const i=membres.findIndex(m=>m.user_id===userId);return COLORS[i%COLORS.length];};
+
+  const getMoisDisponibles=()=>{const k=new Set(depenses.map(d=>getMoisKey(d.date)));return Array.from(k).sort((a,b)=>b.localeCompare(a));};
+  const depensesFiltrees=moisSelectionne==="tous"?depenses:depenses.filter(d=>getMoisKey(d.date)===moisSelectionne);
+  const totalGeneral=depensesFiltrees.reduce((s,d)=>s+parseFloat(d.montant),0);
+
+  const calcParPersonne=()=>{
+    const du={};const paye={};
+    membres.forEach(m=>{du[m.user_id]=0;paye[m.user_id]=0;});
+    depensesFiltrees.forEach(d=>{
+      if(paye[d.payeur_id]!==undefined)paye[d.payeur_id]+=parseFloat(d.montant);
+      const pa=JSON.parse(typeof d.partage==="string"?d.partage:JSON.stringify(d.partage));
+      const participants=Object.values(pa).filter(Boolean).length;
+      if(participants>0){
+        const part=parseFloat(d.montant)/participants;
+        Object.entries(pa).forEach(([uid,v])=>{if(v&&du[uid]!==undefined)du[uid]+=part;});
+      }
+    });
+    return membres.map((m,i)=>({userId:m.user_id,nom:m.prenom,paye:paye[m.user_id]||0,du:du[m.user_id]||0,bilan:(paye[m.user_id]||0)-(du[m.user_id]||0),i}));
+  };
+
+  const stats=calcParPersonne();
+  const reglements=calcReglements(noms,stats.map(s=>({...s,bilan:s.bilan})));
+  const depParMembre=(userId)=>depensesFiltrees.filter(d=>d.payeur_id===userId);
+
+  const analyserFacture=async(file)=>{
+    setScanning(true);setScanMsg("🔍 Analyse...");
+    setFactureFile(file);setFacturePreview(URL.createObjectURL(file));
+    try{
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});
+      const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},{type:"text",text:`Analyse cette facture. JSON uniquement: {"description":"nom magasin","montant":12.50}. Si montant inconnu mets 0.`}]}]})});
+      const data=await resp.json();
+      const txt=data.content?.map(i=>i.text||"").join("")||"";
+      const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());
+      setForm(f=>({...f,description:parsed.description||"",montant:parsed.montant>0?String(parsed.montant):""}));
+      setScanMsg(parsed.montant>0?"✅ Facture lue !":"⚠️ Montant non détecté.");
+    }catch(e){setScanMsg("❌ Impossible de lire.");}
+    finally{setScanning(false);}
+  };
+
+  const onScanChange=(e)=>{const f=e.target.files?.[0];if(f)analyserFacture(f);e.target.value="";};
+  const onFactureChange=(e)=>{const f=e.target.files?.[0];if(f){setFactureFile(f);setFacturePreview(URL.createObjectURL(f));setScanMsg("📎 Facture attachée !");}e.target.value="";};
+
+  const uploadFacture=async(file)=>{
+    const ext=file.name.split('.').pop()||'jpg';
+    const nom=`facture_${groupe.id}_${Date.now()}.${ext}`;
+    const{error}=await sb.storage.from("factures").upload(nom,file);
+    if(error)throw error;
+    const{data}=sb.storage.from("factures").getPublicUrl(nom);
+    return data.publicUrl;
+  };
+
+  const ajouterDepense=async()=>{
+    if(!form.description||!form.montant||!Object.values(form.partage).some(Boolean))return;
+    setUploading(true);
+    try{
+      let factureUrl=null;
+      if(factureFile)factureUrl=await uploadFacture(factureFile);
+      await sb.from("depenses").insert({
+        description:form.description,
+        montant:parseFloat(form.montant),
+        payeur_id:form.payeur,
+        partage:JSON.stringify(form.partage),
+        date:new Date().toLocaleDateString("fr-FR"),
+        facture_url:factureUrl,
+        groupe_id:groupe.id,
+        user_id:user.id
+      });
+      await chargerTout();
+      const partageInit={};membres.forEach(m=>{partageInit[m.user_id]=true;});
+      setForm({description:"",montant:"",payeur:user.id,partage:partageInit});
+      setFactureFile(null);setFacturePreview(null);setScanMsg("");
+    }catch(e){setErreur("Erreur ajout : "+e.message);}
+    finally{setUploading(false);}
+  };
+
+  const supprimerDepense=async(id,userId)=>{
+    if(userId!==user.id){setErreur("Vous ne pouvez supprimer que vos propres dépenses.");return;}
+    try{
+      await sb.from("depenses").delete().eq("id",id);
+      await chargerTout();setDeleteId(null);
+    }catch(e){setErreur("Erreur suppression.");}
+  };
+
+  return(
+    <div style={{minHeight:"100vh",padding:"24px 16px"}}>
+      <input ref={scanFileRef} type="file" accept="image/*" style={{display:"none"}} onChange={onScanChange}/>
+      <input ref={scanCameraRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={onScanChange}/>
+      <input ref={factureFileRef} type="file" accept="image/*" style={{display:"none"}} onChange={onFactureChange}/>
+      <input ref={factureCameraRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={onFactureChange}/>
+
+      {factureVue&&(
+        <div className="modal-bg" onClick={()=>setFactureVue(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <span style={{fontWeight:600,fontSize:15}}>🧾 Facture</span>
+              <button onClick={()=>setFactureVue(null)} style={{background:"none",border:"none",color:"#aaa",fontSize:22}}>✕</button>
+            </div>
+            <img src={factureVue} alt="Facture" style={{width:"100%",borderRadius:10,maxHeight:"70vh",objectFit:"contain"}}/>
+          </div>
+        </div>
+      )}
+
+      <div style={{maxWidth:600,margin:"0 auto"}}>
+
+        {/* Header */}
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="70" height="70" style={{marginBottom:8}}>
+            <rect width="512" height="512" rx="100" fill="#1a1a22"/>
+            <polygon points="256,80 400,200 380,200 380,340 132,340 132,200 112,200" fill="#0f0f13" stroke="#FFD93D" strokeWidth="4" strokeLinejoin="round"/>
+            <polygon points="256,80 400,200 112,200" fill="none" stroke="#FFD93D" strokeWidth="4" strokeLinejoin="round"/>
+            <rect x="220" y="250" width="72" height="90" rx="36" fill="#FFD93D"/>
+            <rect x="152" y="230" width="48" height="48" rx="8" fill="#FFD93D" opacity="0.6"/>
+            <rect x="312" y="230" width="48" height="48" rx="8" fill="#FFD93D" opacity="0.6"/>
+            <text x="256" y="312" textAnchor="middle" fontSize="40">💰</text>
+          </svg>
+          <h1 style={{fontFamily:"'Syne',sans-serif",fontSize:24,fontWeight:800}}>KOR HESSAB</h1>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:6}}>
+            <span style={{background:"#1a1a22",border:"1px solid #2a2a36",borderRadius:8,padding:"4px 10px",fontSize:13,color:"#FFD93D",fontWeight:600,letterSpacing:2}}>{groupe.code}</span>
+            <span style={{fontSize:13,color:"#666"}}>{groupe.nom}</span>
+          </div>
+          <div style={{fontSize:12,color:"#555",marginTop:4}}>Bonjour {monPrenom} 👋</div>
+          <button onClick={async()=>{await sb.auth.signOut();window.location.reload();}} style={{marginTop:8,background:"none",border:"1px solid #2a2a36",color:"#555",padding:"4px 12px",borderRadius:8,fontSize:12}}>Déconnexion</button>
+        </div>
+
+        {erreur&&(
+          <div style={{background:"#2a1a1a",border:"1px solid #FF6B6B",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#FF6B6B",marginBottom:16}}>
+            {erreur}<button onClick={()=>setErreur("")} style={{background:"none",border:"none",color:"#FF6B6B",float:"right"}}>✕</button>
+          </div>
+        )}
+
+        {/* Membres */}
+        <div className="card" style={{marginBottom:20}}>
+          <span style={{fontWeight:600,fontSize:15}}>👥 Membres du groupe</span>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:12}}>
+            {membres.map((m,i)=>(
+              <div key={m.id} style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:COLORS[i%COLORS.length],flexShrink:0}}/>
+                <span style={{fontSize:14,fontWeight:500}}>{m.prenom}{m.user_id===user.id?" (moi)":""}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Formulaire */}
+        <div className="card" style={{marginBottom:20}}>
+          <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:700,margin:"0 0 16px"}}>➕ Ajouter une dépense</h2>
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:12,color:"#888",marginBottom:8}}>📱 Scanner avec l'IA</div>
+            <div style={{display:"flex",gap:10}}>
+              <button className="scan-btn" style={{background:"#1e2a3a",color:"#4ECDC4"}} onClick={()=>scanCameraRef.current.click()} disabled={scanning||uploading}>📷 Photo</button>
+              <button className="scan-btn" style={{background:"#1e2a3a",color:"#FFD93D"}} onClick={()=>scanFileRef.current.click()} disabled={scanning||uploading}>🖼️ Galerie</button>
+            </div>
+          </div>
+          {facturePreview&&(
+            <div style={{marginBottom:14,borderRadius:12,overflow:"hidden",border:"1px solid #2a2a36",position:"relative"}}>
+              <img src={facturePreview} alt="Facture" style={{width:"100%",maxHeight:140,objectFit:"cover",display:"block"}}/>
+              {scanning&&<div style={{position:"absolute",inset:0,background:"#0f0f13cc",display:"flex",alignItems:"center",justifyContent:"center"}}><span className="pulsing" style={{fontSize:13,color:"#FFD93D",fontWeight:600}}>🔍 Analyse...</span></div>}
+              <button onClick={()=>{setFactureFile(null);setFacturePreview(null);setScanMsg("");}} style={{position:"absolute",top:8,right:8,background:"#0f0f13cc",border:"none",color:"#fff",borderRadius:"50%",width:28,height:28,fontSize:16}}>✕</button>
+            </div>
+          )}
+          {scanMsg&&<div style={{background:"#0f0f13",border:"1px solid #2a2a36",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#aaa",marginBottom:14}}>{scanMsg}</div>}
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+            <div style={{flex:1,height:1,background:"#2a2a36"}}/>
+            <span style={{color:"#444",fontSize:12}}>ou saisir manuellement</span>
+            <div style={{flex:1,height:1,background:"#2a2a36"}}/>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <input className="input-field" placeholder="Description (ex: Courses Carrefour)" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
+            <div style={{display:"flex",gap:10}}>
+              <input className="input-field" type="number" placeholder="Montant (€)" value={form.montant} onChange={e=>setForm({...form,montant:e.target.value})} style={{flex:1}}/>
+              <select className="input-field" value={form.payeur} onChange={e=>setForm({...form,payeur:e.target.value})} style={{flex:1}}>
+                {membres.map(m=><option key={m.user_id} value={m.user_id}>💳 {m.prenom}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{fontSize:13,color:"#888",marginBottom:8}}>Partagé entre :</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {membres.map((m,i)=>{
+                  const actif=form.partage[m.user_id]===true;
+                  return(<button key={m.user_id} className={`chip ${actif?"active":""}`} style={actif?{background:COLORS[i%COLORS.length],borderColor:COLORS[i%COLORS.length]}:{borderColor:"#2a2a36",color:"#666"}} onClick={()=>{const p={...form.partage};p[m.user_id]=!p[m.user_id];setForm({...form,partage:p});}}>{m.prenom}</button>);
+                })}
+              </div>
+            </div>
+            {!facturePreview&&(
+              <div style={{border:"1px dashed #2a2a36",borderRadius:10,padding:"12px",textAlign:"center"}}>
+                <div style={{fontSize:12,color:"#666",marginBottom:8}}>📎 Attacher une facture (facultatif)</div>
+                <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+                  <button onClick={()=>factureCameraRef.current.click()} style={{background:"#1a1a2a",border:"1px solid #2a2a36",color:"#aaa",padding:"6px 14px",borderRadius:8,fontSize:13}}>📷 Photo</button>
+                  <button onClick={()=>factureFileRef.current.click()} style={{background:"#1a1a2a",border:"1px solid #2a2a36",color:"#aaa",padding:"6px 14px",borderRadius:8,fontSize:13}}>🖼️ Galerie</button>
+                </div>
+              </div>
+            )}
+            <button className="btn-primary" disabled={!form.description||!form.montant||!Object.values(form.partage).some(Boolean)||uploading||scanning} onClick={ajouterDepense}>
+              {uploading?"⏳ Envoi en cours...":"Ajouter la dépense"}
+            </button>
+          </div>
+        </div>
+
+        {loading?(
+          <div style={{padding:"40px 0",textAlign:"center"}}><div className="spinner"/></div>
+        ):depenses.length>0?(
+          <>
+            {/* Filtre mois */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:13,color:"#888",marginBottom:10,fontWeight:600}}>📅 Filtrer par mois</div>
+              <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:8}}>
+                <button className={`month-chip ${moisSelectionne==="tous"?"active":"inactive"}`} onClick={()=>setMoisSelectionne("tous")}>Tous</button>
+                {getMoisDisponibles().map(key=>(
+                  <button key={key} className={`month-chip ${moisSelectionne===key?"active":"inactive"}`} onClick={()=>setMoisSelectionne(key)}>{getMoisLabel(key)}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bilan */}
+            <div className="card" style={{marginBottom:20}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:16}}>
+                <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:700,margin:0}}>📊 {moisSelectionne==="tous"?"Bilan total":`Bilan ${getMoisLabel(moisSelectionne)}`}</h2>
+                <span style={{fontSize:20,fontWeight:700,color:"#FFD93D"}}>{totalGeneral.toFixed(2)} €</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {stats.map((s,i)=>{
+                  const ouvert=personneOuverte===s.userId;
+                  const depP=depParMembre(s.userId);
+                  return(
+                    <div key={s.userId} style={{borderRadius:12,overflow:"hidden",border:ouvert?`1px solid ${COLORS[i%COLORS.length]}44`:"1px solid #2a2a36"}}>
+                      <div onClick={()=>setPersonneOuverte(ouvert?null:s.userId)} style={{background:"#0f0f13",padding:"12px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{width:10,height:10,borderRadius:"50%",background:COLORS[i%COLORS.length]}}/>
+                          <span style={{fontWeight:600,fontSize:14}}>{s.nom}{s.userId===user.id?" (moi)":""}</span>
+                          <span style={{fontSize:11,color:"#555"}}>({depP.length} dép.)</span>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontWeight:700,fontSize:15,color:s.bilan>=0?"#6BCB77":"#FF6B6B"}}>{s.bilan>=0?"+":""}{s.bilan.toFixed(2)} €</span>
+                          <span style={{color:"#555",fontSize:14,display:"inline-block",transform:ouvert?"rotate(180deg)":"rotate(0)",transition:"transform 0.2s"}}>⌄</span>
+                        </div>
+                      </div>
+                      {ouvert&&(
+                        <div style={{background:"#13131a",padding:"10px 12px"}}>
+                          <div style={{display:"flex",gap:16,fontSize:12,color:"#666",marginBottom:10,paddingLeft:4}}>
+                            <span>Payé : <b style={{color:"#aaa"}}>{s.paye.toFixed(2)} €</b></span>
+                            <span>Doit : <b style={{color:"#aaa"}}>{s.du.toFixed(2)} €</b></span>
+                          </div>
+                          {depP.length===0?(
+                            <div style={{textAlign:"center",color:"#444",fontSize:13,padding:"12px 0"}}>Aucune dépense payée</div>
+                          ):(
+                            depP.map(d=>(
+                              <div key={d.id} style={{background:"#1a1a22",borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid #2a2a36"}}>
+                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                                  <div style={{flex:1}}>
+                                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                                      <span style={{fontWeight:600,fontSize:13}}>{d.description}</span>
+                                      <span style={{fontWeight:700,color:"#FFD93D",fontSize:13}}>{parseFloat(d.montant).toFixed(2)} €</span>
+                                    </div>
+                                    <div style={{fontSize:11,color:"#555",marginBottom:4}}>{d.date}</div>
+                                    {d.facture_url&&(
+                                      <button onClick={()=>setFactureVue(d.facture_url)} style={{background:COLORS[i%COLORS.length]+"22",border:`1px solid ${COLORS[i%COLORS.length]}55`,color:COLORS[i%COLORS.length],padding:"3px 10px",borderRadius:6,fontSize:12,fontWeight:600,marginTop:2}}>🧾 Voir la facture</button>
+                                    )}
+                                  </div>
+                                  <div style={{display:"flex",gap:4,flexShrink:0,marginLeft:8}}>
+                                    {d.user_id===user.id&&(
+                                      deleteId===d.id?(
+                                        <>
+                                          <button onClick={()=>supprimerDepense(d.id,d.user_id)} style={{background:"#FF6B6B",border:"none",color:"#fff",padding:"4px 8px",borderRadius:6,fontSize:11,fontWeight:600}}>Oui</button>
+                                          <button onClick={()=>setDeleteId(null)} style={{background:"#2a2a36",border:"none",color:"#aaa",padding:"4px 8px",borderRadius:6,fontSize:11}}>Non</button>
+                                        </>
+                                      ):(
+                                        <button className="delete-btn" onClick={()=>setDeleteId(d.id)} style={{fontSize:16}}>🗑</button>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{marginTop:14,padding:"10px 14px",background:"#0f0f13",borderRadius:10,fontSize:13,color:"#666"}}>
+                🟢 payé plus que sa part &nbsp;|&nbsp; 🔴 doit de l'argent
+              </div>
+            </div>
+
+            {/* Qui rembourse qui */}
+            {reglements.length>0&&(
+              <div className="card" style={{marginBottom:20}}>
+                <h2 style={{fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:700,margin:"0 0 14px"}}>💸 Qui rembourse qui ?</h2>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {reglements.map((r,idx)=>(
+                    <div key={idx} style={{background:"#0f0f13",borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,border:"1px solid #2a2a36"}}>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:COLORS[r.iDe%COLORS.length]+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:COLORS[r.iDe%COLORS.length],flexShrink:0}}>{r.de.charAt(0)}</div>
+                      <div style={{flex:1,fontSize:14}}>
+                        <span style={{fontWeight:700,color:COLORS[r.iDe%COLORS.length]}}>{r.de}</span>
+                        <span style={{color:"#888"}}> → </span>
+                        <span style={{fontWeight:700,color:"#FFD93D"}}>{r.montant.toFixed(2)} €</span>
+                        <span style={{color:"#888"}}> → </span>
+                        <span style={{fontWeight:700,color:COLORS[r.iA%COLORS.length]}}>{r.a}</span>
+                      </div>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:COLORS[r.iA%COLORS.length]+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:COLORS[r.iA%COLORS.length],flexShrink:0}}>{r.a.charAt(0)}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{marginTop:12,fontSize:12,color:"#444",textAlign:"center"}}>{reglements.length} transaction{reglements.length>1?"s":""} pour tout régler</div>
+              </div>
+            )}
+          </>
+        ):(
+          <div style={{textAlign:"center",padding:"40px 0",color:"#444"}}>
+            <div style={{fontSize:40,marginBottom:10}}>🛒</div>
+            <p style={{fontSize:14}}>Aucune dépense pour le moment.<br/>Ajoutez votre première dépense !</p>
+          </div>
+        )}
+
+        <p style={{textAlign:"center",color:"#333",fontSize:12,marginTop:24}}>✅ Données sauvegardées en temps réel</p>
+      </div>
+    </div>
+  );
+}
+
+// ==================== ROOT ====================
+function Root(){
+  const [user,setUser]=useState(null);
+  const [groupe,setGroupe]=useState(null);
+  const [monPrenom,setMonPrenom]=useState("");
+  const [checking,setChecking]=useState(true);
+
+  useEffect(()=>{
+    sb.auth.getSession().then(({data:{session}})=>{
+      if(session){
+        setUser(session.user);
+        // Vérifier si déjà dans un groupe
+        sb.from("membres").select("*,groupes(*)").eq("user_id",session.user.id).single().then(({data})=>{
+          if(data){setGroupe(data.groupes);setMonPrenom(data.prenom);}
+          setChecking(false);
+        });
+      }else{setChecking(false);}
+    });
+    sb.auth.onAuthStateChange((_,session)=>{
+      if(!session){setUser(null);setGroupe(null);}
+    });
+  },[]);
+
+  if(checking)return<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}><div className="spinner"/></div>;
+  if(!user)return<AuthScreen onAuth={u=>{setUser(u);}}/>;
+  if(!groupe)return<GroupScreen user={user} onGroup={(g,p)=>{setGroupe(g);setMonPrenom(p);}}/>;
+  return<MainApp user={user} groupe={groupe} monPrenom={monPrenom}/>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root/>);
+</script>
+</body>
+</html>
